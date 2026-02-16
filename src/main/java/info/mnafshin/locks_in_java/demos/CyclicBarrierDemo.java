@@ -234,11 +234,13 @@ public class CyclicBarrierDemo {
                 try {
                     System.out.println("Faulty thread: Working...");
                     Thread.sleep(500);
-                    System.out.println("Faulty thread: Throwing exception before barrier");
-                    throw new RuntimeException("Simulated error");
+                    System.out.println("Faulty thread: About to reach barrier, will throw exception");
+                    barrier.await(); // Actually reach the barrier
+                    throw new RuntimeException("Simulated error"); // This won't execute
+                } catch (BrokenBarrierException e) {
+                    System.out.println("Faulty thread: Caught BrokenBarrierException - " + e.getClass().getSimpleName());
                 } catch (RuntimeException e) {
                     System.out.println("Faulty thread: " + e.getMessage());
-                    // Don't reach the barrier - it will be broken
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }

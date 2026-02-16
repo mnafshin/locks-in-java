@@ -34,54 +34,55 @@ public class DemoLauncher {
                 System.out.println("\n" + "=".repeat(60) + "\n");
                 
                 switch (choice) {
-                    case 1:
+                    case 1 -> {
                         System.out.println("Running INTRINSIC LOCK DEMO...\n");
                         IntrinsicLockDemo.main(new String[0]);
-                        break;
+                    }
                     
-                    case 2:
+                    case 2 -> {
                         System.out.println("Running REENTRANT LOCK DEMO...\n");
                         ReentrantLockDemo.main(new String[0]);
-                        break;
+                    }
                     
-                    case 3:
+                    case 3 -> {
                         System.out.println("Running READ-WRITE LOCK DEMO...\n");
                         ReadWriteLockDemo.main(new String[0]);
-                        break;
+                    }
                     
-                    case 4:
+                    case 4 -> {
                         System.out.println("Running SEMAPHORE DEMO...\n");
                         SemaphoreDemo.main(new String[0]);
-                        break;
+                    }
                     
-                    case 5:
+                    case 5 -> {
                         System.out.println("Running STAMPED LOCK DEMO...\n");
                         StampedLockDemo.main(new String[0]);
-                        break;
+                    }
                     
-                    case 6:
+                    case 6 -> {
                         System.out.println("Running COUNT DOWN LATCH DEMO...\n");
                         CountDownLatchDemo.main(new String[0]);
-                        break;
+                    }
                     
-                    case 7:
+                    case 7 -> {
                         System.out.println("Running CYCLIC BARRIER DEMO...\n");
                         CyclicBarrierDemo.main(new String[0]);
-                        break;
+                    }
                     
-                    case 8:
+                    case 8 -> {
                         System.out.println("Running PHASER DEMO...\n");
                         PhaserDemo.main(new String[0]);
-                        break;
+                    }
                     
-                    case 9:
+                    case 9 -> {
                         System.out.println("Exiting Demo Launcher...");
                         running = false;
-                        break;
+                    }
                     
-                    default:
+                    default -> {
                         System.out.println("❌ Invalid choice! Please enter a number between 1 and 9.");
                         continue;
+                    }
                 }
                 
                 if (running && choice >= 1 && choice <= 8) {

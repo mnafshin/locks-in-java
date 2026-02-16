@@ -86,7 +86,6 @@ public class CountDownLatchDemo {
                 new Thread(() -> {
                     try {
                         startSignal.await(); // Wait for start signal
-                        long raceStart = System.currentTimeMillis();
                         
                         // Run the race
                         long raceTime = (long)(Math.random() * 3000) + 1000; // 1-4 seconds
@@ -159,15 +158,17 @@ public class CountDownLatchDemo {
                     System.out.println("[Stage2] Stage 1 complete! Starting processing...");
 
                     for (String item : data) {
-                        System.out.println("[Stage2] Validating: " + item);
-                        Thread.sleep(150);
-                        System.out.println("[Stage2] Validated ✓");
-                        stage2Count.incrementAndGet();
+                        try {
+                            System.out.println("[Stage2] Validating: " + item);
+                            Thread.sleep(150);
+                            System.out.println("[Stage2] Validated ✓");
+                            stage2Count.incrementAndGet();
+                        } finally {
+                            stage2Latch.countDown();
+                        }
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                } finally {
-                    stage2Latch.countDown();
                 }
             }, "Stage2-Worker");
 
