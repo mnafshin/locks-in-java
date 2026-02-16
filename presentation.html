@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java Synchronization Mechanisms</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/black.css">
+    <style>
+        .reveal h1, .reveal h2, .reveal h3 { text-transform: none; }
+        .reveal pre { width: 100%; }
+        .reveal code { padding: 2px 6px; background: rgba(255, 255, 255, 0.1); }
+        .comparison-table { margin: 20px auto; font-size: 0.7em; }
+        .comparison-table td { padding: 8px; }
+        .highlight-good { color: #42b983; font-weight: bold; }
+        .highlight-bad { color: #f56565; font-weight: bold; }
+        .lock-icon { font-size: 2em; margin: 0 10px; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Title Slide -->
+            <section>
+                <h1>🔒 Java Synchronization Mechanisms</h1>
+                <h3>A Comprehensive Guide</h3>
+                <p>Understanding Threads, Locks & Coordination Primitives</p>
+                <br>
+                <small>Blog: <a href="https://github.com/mnafshin/locks-in-java">github.com/mnafshin/locks-in-java</a></small>
+            </section>
+
+            <!-- Agenda -->
+            <section>
+                <h2>📋 Agenda</h2>
+                <ul>
+                    <li>Why Synchronization Matters</li>
+                    <li>8 Synchronization Primitives</li>
+                    <li>Comparison & Selection Guide</li>
+                    <li>Best Practices</li>
+                    <li>Live Demos</li>
+                </ul>
+            </section>
+
+            <!-- Why Synchronization -->
+            <section>
+                <section>
+                    <h2>🎯 Why Synchronization?</h2>
+                    <p>Multi-threaded applications need coordination</p>
+                </section>
+                <section>
+                    <h3>The Race Condition Problem</h3>
+                    <pre><code class="java">// ❌ NOT thread-safe
+int balance = 1000;
+balance = balance + 100;  // Thread 1: Read (1000) → Add → Write (1100)
+balance = balance - 50;   // Thread 2: Read (?????) → Sub → Write (?????)
+// Result might be: 950, 1050, or 1000 - UNPREDICTABLE!</code></pre>
+                </section>
+                <section>
+                    <h3>The Solution: Synchronization</h3>
+                    <pre><code class="java">// ✅ Thread-safe with synchronization
+synchronized void deposit(int amount) {
+    balance = balance + amount;
+}
+// Only ONE thread can execute at a time!</code></pre>
+                </section>
+            </section>
+
+            <!-- Intrinsic Locks -->
+            <section>
+                <section>
+                    <h2>1️⃣ Intrinsic Locks (synchronized)</h2>
+                    <span class="lock-icon">🔐</span>
+                </section>
+                <section>
+                    <h3>The Simplest Option</h3>
+                    <pre><code class="java">public class Counter {
+    private int count = 0;
+    
+    // Synchronize the entire method
+    public synchronized void increment() {
+        count++;
+    }
+    
+    // Or synchronize a block
+    public void incrementSafe() {
+        synchronized(this) {
+            count++;
+        }
+    }
+}</code></pre>
+                </section>
+                <section>
+                    <h3>Characteristics</h3>
+                    <ul>
+                        <li><span class="highlight-good">✅ Built-in, no setup needed</span></li>
+                        <li><span class="highlight-good">✅ Automatically released</span></li>
+                        <li><span class="highlight-good">✅ JVM optimizations</span></li>
+                        <li><span class="highlight-bad">❌ No timeout support</span></li>
+                        <li><span class="highlight-bad">❌ No interruptibility</span></li>
+                    </ul>
+                </section>
+                <section>
+                    <h3>When to Use</h3>
+                    <p>✅ Simple mutual exclusion</p>
+                    <p>✅ Uncontended locks</p>
+                    <p>✅ Quick prototype</p>
+                </section>
+            </section>
+
+            <!-- ReentrantLock -->
+            <section>
+                <section>
+                    <h2>2️⃣ ReentrantLock</h2>
+                    <span class="lock-icon">🔑</span>
+                </section>
+                <section>
+                    <h3>Explicit Control & Power</h3>
+                    <pre><code class="java">ReentrantLock lock = new ReentrantLock();
+
+// Try to get lock with timeout
+if (lock.tryLock(5, TimeUnit.SECONDS)) {
+    try {
+        // Critical section
+    } finally {
+        lock.unlock();
+    }
+} else {
+    System.out.println("Failed to acquire lock");
+}</code></pre>
+                </section>
+                <section>
+                    <h3>Advanced Features</h3>
+                    <ul>
+                        <li><span class="highlight-good">✅ Timeout support</span></li>
+                        <li><span class="highlight-good">✅ Interruptible locks</span></li>
+                        <li><span class="highlight-good">✅ Condition variables</span></li>
+                        <li><span class="highlight-good">✅ Fair scheduling</span></li>
+                        <li><span class="highlight-bad">❌ Must manually unlock</span></li>
+                        <li><span class="highlight-bad">❌ More verbose</span></li>
+                    </ul>
+                </section>
+                <section>
+                    <h3>When to Use</h3>
+                    <p>✅ Need timeout support</p>
+                    <p>✅ Producer-consumer patterns</p>
+                    <p>✅ Interruptible operations</p>
+                </section>
+            </section>
+
+            <!-- ReadWriteLock -->
+            <section>
+                <section>
+                    <h2>3️⃣ ReadWriteLock</h2>
+                    <span class="lock-icon">👥📖</span>
+                </section>
+                <section>
+                    <h3>Multiple Readers, One Writer</h3>
+                    <pre><code class="java">ReadWriteLock rwLock = new ReentrantReadWriteLock();
+
+// Multiple threads can read simultaneously
+void read() {
+    rwLock.readLock().lock();
+    try {
+        // Read data - many threads here at once
+    } finally {
+        rwLock.readLock().unlock();
+    }
+}
+
+// Only one writer, blocks all readers
+void write(String newData) {
+    rwLock.writeLock().lock();
+    try {
+        // Exclusive write access
+    } finally {
+        rwLock.writeLock().unlock();
+    }
+}</code></pre>
+                </section>
+                <section>
+                    <h3>Performance Comparison</h3>
+                    <table class="comparison-table">
+                        <tr>
+                            <th>Scenario</th>
+                            <th>ReadWriteLock</th>
+                            <th>Synchronized</th>
+                        </tr>
+                        <tr>
+                            <td>95% Reads</td>
+                            <td><span class="highlight-good">⚡ FASTER</span></td>
+                            <td>❌ Slow</td>
+                        </tr>
+                        <tr>
+                            <td>50% Reads</td>
+                            <td>Similar</td>
+                            <td>Similar</td>
+                        </tr>
+                    </table>
+                </section>
+                <section>
+                    <h3>When to Use</h3>
+                    <p>✅ Read-heavy workloads (cache, config)</p>
+                    <p>✅ Many readers, few writers</p>
+                    <p>✅ Need performance boost</p>
+                </section>
+            </section>
+
+            <!-- Semaphore -->
+            <section>
+                <section>
+                    <h2>4️⃣ Semaphore</h2>
+                    <span class="lock-icon">🎟️</span>
+                </section>
+                <section>
+                    <h3>Resource Pooling</h3>
+                    <pre><code class="java">// Only 5 connections can be used at once
+Semaphore semaphore = new Semaphore(5);
+
+void useConnection() throws InterruptedException {
+    semaphore.acquire();  // Wait for permit
+    try {
+        // Use connection
+    } finally {
+        semaphore.release();  // Return permit
+    }
+}</code></pre>
+                </section>
+                <section>
+                    <h3>Use Cases</h3>
+                    <ul>
+                        <li>Connection pooling</li>
+                        <li>Thread pool limits</li>
+                        <li>Rate limiting</li>
+                        <li>Binary semaphore (mutex)</li>
+                    </ul>
+                </section>
+                <section>
+                    <h3>When to Use</h3>
+                    <p>✅ Limit concurrent access to resources</p>
+                    <p>✅ Resource pooling</p>
+                    <p>✅ Rate limiting requests</p>
+                </section>
+            </section>
+
+            <!-- StampedLock -->
+            <section>
+                <section>
+                    <h2>5️⃣ StampedLock</h2>
+                    <span class="lock-icon">⚡</span>
+                </section>
+                <section>
+                    <h3>High-Performance with Optimistic Reads</h3>
+                    <pre><code class="java">StampedLock lock = new StampedLock();
+
+// Fast path: optimistic read (no lock!)
+long stamp = lock.tryOptimisticRead();
+int result = value;
+if (!lock.validate(stamp)) {
+    // Conflict detected, fall back to pessimistic
+    stamp = lock.readLock();
+    try {
+        result = value;
+    } finally {
+        lock.unlockRead(stamp);
+    }
+}</code></pre>
+                </section>
+                <section>
+                    <h3>Characteristics</h3>
+                    <ul>
+                        <li><span class="highlight-good">✅ Highest performance</span></li>
+                        <li><span class="highlight-good">✅ Optimistic reads</span></li>
+                        <li><span class="highlight-bad">❌ Complex API!</span></li>
+                        <li><span class="highlight-bad">❌ Not reentrant</span></li>
+                        <li><span class="highlight-bad">⚠️ Use only if profiled</span></li>
+                    </ul>
+                </section>
+                <section>
+                    <h3>When to Use</h3>
+                    <p>⚠️ ONLY after profiling shows need!</p>
+                    <p>✅ Ultra-high read throughput</p>
+                    <p>✅ Low-contention scenarios</p>
+                </section>
+            </section>
+
+            <!-- Coordination Primitives -->
+            <section>
+                <section>
+                    <h2>6️⃣ 7️⃣ 8️⃣ Coordination Primitives</h2>
+                </section>
+                <section>
+                    <h2>CountDownLatch</h2>
+                    <pre><code class="java">CountDownLatch latch = new CountDownLatch(3);
+
+// Worker threads
+for (int i = 0; i < 3; i++) {
+    new Thread(() -> {
+        doWork();
+        latch.countDown();
+    }).start();
+}
+
+// Main thread waits
+latch.await();  // Waits for all 3 to complete
+System.out.println("All workers done!");</code></pre>
+                    <p><span class="highlight-good">✅ One-time synchronization</span></p>
+                    <p><span class="highlight-bad">❌ Cannot be reused</span></p>
+                </section>
+                <section>
+                    <h2>CyclicBarrier</h2>
+                    <pre><code class="java">CyclicBarrier barrier = new CyclicBarrier(3);
+
+// Each thread
+for (int phase = 0; phase < 5; phase++) {
+    doPhaseWork();
+    barrier.await();  // Wait for others
+}</code></pre>
+                    <p><span class="highlight-good">✅ Reusable (cyclic)</span></li>
+                    <p><span class="highlight-good">✅ Great for iterative algorithms</span></p>
+                </section>
+                <section>
+                    <h2>Phaser</h2>
+                    <pre><code class="java">Phaser phaser = new Phaser(1);  // Start with main thread
+
+// Dynamically register workers
+phaser.register();  // Add worker
+phaser.register();  // Add another
+
+phaser.arriveAndAwaitAdvance();  // Synchronize phases</code></pre>
+                    <p><span class="highlight-good">✅ Most flexible + dynamic</span></p>
+                    <p><span class="highlight-good">✅ Multi-phase support</span></p>
+                </section>
+            </section>
+
+            <!-- Comparison Table -->
+            <section>
+                <h2>📊 Quick Comparison</h2>
+                <table style="font-size: 0.6em; margin: auto;">
+                    <tr style="font-weight: bold;">
+                        <td>Type</td>
+                        <td>Timeout</td>
+                        <td>Reentrant</td>
+                        <td>Performance</td>
+                        <td>Complexity</td>
+                    </tr>
+                    <tr>
+                        <td>synchronized</td>
+                        <td>❌</td>
+                        <td>✅</td>
+                        <td>⚡⚡⚡</td>
+                        <td>⭐</td>
+                    </tr>
+                    <tr>
+                        <td>ReentrantLock</td>
+                        <td>✅</td>
+                        <td>✅</td>
+                        <td>⚡⚡</td>
+                        <td>⭐⭐</td>
+                    </tr>
+                    <tr>
+                        <td>ReadWriteLock</td>
+                        <td>✅</td>
+                        <td>✅</td>
+                        <td>⚡⚡⚡*</td>
+                        <td>⭐⭐</td>
+                    </tr>
+                    <tr>
+                        <td>Semaphore</td>
+                        <td>✅</td>
+                        <td>❌</td>
+                        <td>⚡⚡⚡</td>
+                        <td>⭐</td>
+                    </tr>
+                    <tr>
+                        <td>StampedLock</td>
+                        <td>✅</td>
+                        <td>❌</td>
+                        <td>⚡⚡⚡⚡</td>
+                        <td>⭐⭐⭐</td>
+                    </tr>
+                </table>
+                <small>* Only on read-heavy workloads</small>
+            </section>
+
+            <!-- Best Practices -->
+            <section>
+                <section>
+                    <h2>✅ Best Practices</h2>
+                </section>
+                <section>
+                    <h3>Do's</h3>
+                    <ul>
+                        <li>✅ Always use try-finally for locks</li>
+                        <li>✅ Acquire locks in consistent order</li>
+                        <li>✅ Keep critical sections short</li>
+                        <li>✅ Match synchronization to workload</li>
+                        <li>✅ Profile before optimizing</li>
+                    </ul>
+                </section>
+                <section>
+                    <h3>Don'ts</h3>
+                    <ul>
+                        <li>❌ Hold locks during I/O operations</li>
+                        <li>❌ Forget to unlock</li>
+                        <li>❌ Nest locks without planning</li>
+                        <li>❌ Use StampedLock without profiling</li>
+                        <li>❌ Ignore InterruptedException</li>
+                    </ul>
+                </section>
+                <section>
+                    <h3>The Golden Rule</h3>
+                    <p style="font-size: 1.3em; margin-top: 50px;">
+                        <span class="highlight-good">Always release locks in finally blocks!</span>
+                    </p>
+                    <pre><code class="java">lock.lock();
+try {
+    // Critical section
+} finally {
+    lock.unlock();  // ALWAYS HERE!
+}</code></pre>
+                </section>
+            </section>
+
+            <!-- Decision Tree -->
+            <section>
+                <h2>🎯 How to Choose?</h2>
+                <p style="margin-top: 40px;"><strong>Need timeout or interruption?</strong></p>
+                <p style="margin-bottom: 40px;">→ ReentrantLock</p>
+                
+                <p><strong>Many readers, few writers?</strong></p>
+                <p style="margin-bottom: 40px;">→ ReadWriteLock</p>
+                
+                <p><strong>Limit concurrent access to pool?</strong></p>
+                <p style="margin-bottom: 40px;">→ Semaphore</p>
+                
+                <p><strong>Simple and fast enough?</strong></p>
+                <p>→ synchronized (Intrinsic Lock)</p>
+            </section>
+
+            <!-- Demos -->
+            <section>
+                <section>
+                    <h2>🚀 Live Demos Available!</h2>
+                </section>
+                <section>
+                    <h3>Interactive Demo Launcher</h3>
+                    <pre><code class="bash">java info.mnafshin.locks_in_java.demos.DemoLauncher</code></pre>
+                    <p>Menu-driven selection of all demos</p>
+                </section>
+                <section>
+                    <h3>Individual Demos</h3>
+                    <ul style="font-size: 0.8em;">
+                        <li>IntrinsicLockDemo - Bank accounts & caches</li>
+                        <li>ReentrantLockDemo - Timeout & producer-consumer</li>
+                        <li>ReadWriteLockDemo - Concurrent readers</li>
+                        <li>SemaphoreDemo - Connection pools</li>
+                        <li>StampedLockDemo - Optimistic reads</li>
+                        <li>CountDownLatchDemo - Task coordination</li>
+                        <li>CyclicBarrierDemo - Game rounds</li>
+                        <li>PhaserDemo - Multi-phase sync</li>
+                    </ul>
+                </section>
+                <section>
+                    <h3>Get the Code</h3>
+                    <p><a href="https://github.com/mnafshin/locks-in-java" target="_blank">
+                        github.com/mnafshin/locks-in-java
+                    </a></p>
+                    <p>Includes:</p>
+                    <ul>
+                        <li>Complete source code</li>
+                        <li>Runnable demos</li>
+                        <li>Blog post (markdown)</li>
+                        <li>This presentation</li>
+                    </ul>
+                </section>
+            </section>
+
+            <!-- Summary -->
+            <section>
+                <h2>📝 Summary</h2>
+                <ul>
+                    <li>Start with <strong>synchronized</strong> for simplicity</li>
+                    <li>Use <strong>ReentrantLock</strong> for advanced needs</li>
+                    <li>Choose <strong>ReadWriteLock</strong> for read-heavy workloads</li>
+                    <li>Pick <strong>Semaphore</strong> for resource pools</li>
+                    <li>Coordination primitives for multi-stage workflows</li>
+                    <li><strong>Profile first</strong> before optimizing</li>
+                </ul>
+            </section>
+
+            <!-- Q&A -->
+            <section>
+                <h1>❓ Questions?</h1>
+                <p style="margin-top: 100px;">
+                    <a href="https://github.com/mnafshin/locks-in-java">View the project on GitHub</a>
+                </p>
+                <p>Try the demos, read the blog, and happy concurrent programming! 🎉</p>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            transition: 'slide',
+            transitionSpeed: 'default',
+            controls: true,
+            progress: true,
+            center: true,
+            slideNumber: true,
+            overview: true,
+            keyboard: true,
+            touch: true,
+            loop: false,
+            fragments: true,
+            embedded: false,
+            help: true,
+            showNotes: false,
+            autoPlayMedia: null,
+            preloadIframes: null,
+            autoSlide: 0,
+            autoSlideStoppable: true,
+            defaultTiming: 120,
+        });
+    </script>
+</body>
+</html>
