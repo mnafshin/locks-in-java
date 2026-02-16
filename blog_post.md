@@ -762,8 +762,54 @@ The key is understanding your workload and choosing the appropriate primitive th
 
 ---
 
+## Interactive Demos
+
+This blog post comes with comprehensive, runnable demonstrations of each synchronization mechanism. Each demo includes:
+
+- **Real-world scenarios** (bank accounts, caches, connection pools, pipelines, game rounds)
+- **Best practices** with detailed comments
+- **Multiple example classes** per synchronization type
+- **Performance comparisons** where applicable
+- **Exception handling** and timeout patterns
+
+### Demo Files
+
+1. **IntrinsicLockDemo** - Bank accounts, thread-safe counters, and caches
+2. **ReentrantLockDemo** - Timeout support, producer-consumer queues, and fair scheduling
+3. **ReadWriteLockDemo** - Concurrent readers with performance comparison
+4. **SemaphoreDemo** - Connection pooling, rate limiting, and thread pool control
+5. **StampedLockDemo** - Optimistic reads with pessimistic fallback
+6. **CountDownLatchDemo** - Parallel task execution and pipeline coordination
+7. **CyclicBarrierDemo** - Iterative processing and game round synchronization
+8. **PhaserDemo** - Multi-phase execution and dynamic party management
+
+### Running the Demos
+
+Run the interactive launcher:
+```bash
+java info.mnafshin.locks_in_java.demos.DemoLauncher
+```
+
+Or run individual demos:
+```bash
+java info.mnafshin.locks_in_java.demos.IntrinsicLockDemo
+java info.mnafshin.locks_in_java.demos.ReentrantLockDemo
+java info.mnafshin.locks_in_java.demos.SemaphoreDemo
+# ... etc
+```
+
+See [DEMOS_README.md](DEMOS_README.md) for detailed documentation and usage instructions for each demo.
+
+---
+
 ## Further Reading
 
 - Java Concurrency in Practice (Book)
 - Java API Documentation: `java.util.concurrent` package
 - Oracle Java Tutorials on Concurrency
+
+---
+
+## Get the Code
+
+The source code for this project is available on GitHub: https://github.com/mnafshin/locks-in-java.git
